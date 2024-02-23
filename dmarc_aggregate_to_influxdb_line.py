@@ -18,7 +18,7 @@ for rep in parsed['aggregate_reports']:
 
     tags = {
         'domain': domain,
-        'org': rep['report_metadata']['org_name'],
+        'org': rep['report_metadata']['org_name'].replace(' ', '_'),
     }
 
     timestamp = datetime.fromisoformat(rep['report_metadata']['end_date'])
@@ -66,4 +66,4 @@ for rep in parsed['aggregate_reports']:
             else:
                 data_cooked.append(f'{k}="{v}"')
 
-        print(f'dmarc_report,{rec_tags} {" ".join(sorted(data_cooked))} {timestamp}')
+        print(f'dmarc_report,{rec_tags} {",".join(sorted(data_cooked))} {timestamp}')
