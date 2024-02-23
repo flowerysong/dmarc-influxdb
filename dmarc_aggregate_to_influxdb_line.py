@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+
+import json
+import sys
+
+from datetime import datetime
+
+
+with open(sys.argv[1], 'r') as f:
+    parsed = json.load(f)
+
+for rep in parsed['aggregate_reports']:
+    domain = rep['policy_published']['domain']
+    # special case our ephemeral instances to decrease cardinality
+    # the real fix is probably to change the domain used in bounces
+    if domain.endswith('a.mail.umich.edu'):
+        domain = 'umich.edu'
+
+    tags = {
+        'domain': domain,
+        'org': rep['report_metadata']['org_name'],
+    }
+
+    timestamp = datetime.fromisoformat(rep['report_metadata']['end_date'])
+    timestamp = int(timestamp.timestamp()) * 10^9
+
+    for rec in rep['records']:
+        rec_tags = tags.copy()
+        rec_tags.update({
+            'src_domain': rec['source']['base_domain'],
+            'src_country': rec['source']['country'],
+            'header_from': rec['identifiers']['header_from'],
+            'envelope_from': rec['identifiers']['envelope_from'],
+            'aligned_spf': str(rec['alignment']['spf']),
+            'aligned_dkim': str(rec['alignment']['dkim']),
+            'aligned_dmarc': str(rec['alignment']['dmarc']),
+            'dmarc_disposition': rec['policy_evaluated']['disposition'],
+            'spf_result': rec['policy_evaluated']['spf'],
+            'dkim_result': rec['policy_evaluated']['dkim'],
+        })
+
+        dk_result = [x for x in rec['auth_results']['dkim'] if x['result'] == 'pass'] or rec['auth_results']['dkim']
+        if dk_result:
+            rec_tags['dkim_domain'] = dk_result[0]['domain']
+            rec_tags['dkim_selector'] = dk_result[0]['selector']
+            rec_tags['dkim_raw_result'] = dk_result[0]['result']
+
+        spf_result = [x for x in rec['auth_results']['spf'] if x['result'] == 'pass'] or rec['auth_results']['spf']
+        if spf_result:
+            rec_tags['spf_domain'] = spf_result[0]['domain']
+            rec_tags['spf_raw_result'] = spf_result[0]['result']
+
+        rec_tags = ','.join(['='.join(x) for x in sorted(rec_tags.items())])
+
+        data = {
+            'count': rec['count'],
+            'report_id': rep['report_metadata']['report_id'],
+            'src_ip': rec['source']['ip_address'],
+            'src': rec['source']['reverse_dns'],
+        }
+
+        data_cooked = []
+        for (k, v) in data.items():
+            if isinstance(v, int):
+                data_cooked.append(f'{k}={v}')
+            else:
+                data_cooked.append(f'{k}="{v}"')
+
+        print(f'dmarc_report,{rec_tags} {" ".join(sorted(data_cooked))} {timestamp}')
