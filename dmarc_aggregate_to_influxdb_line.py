@@ -29,8 +29,6 @@ for rep in parsed['aggregate_reports']:
         rec_tags.update({
             'src_domain': rec['source']['base_domain'],
             'src_country': rec['source']['country'],
-            'header_from': rec['identifiers']['header_from'],
-            'envelope_from': rec['identifiers']['envelope_from'],
             'aligned_spf': str(rec['alignment']['spf']),
             'aligned_dkim': str(rec['alignment']['dkim']),
             'aligned_dmarc': str(rec['alignment']['dmarc']),
@@ -39,25 +37,27 @@ for rep in parsed['aggregate_reports']:
             'dkim_result': rec['policy_evaluated']['dkim'],
         })
 
-        dk_result = [x for x in rec['auth_results']['dkim'] if x['result'] == 'pass'] or rec['auth_results']['dkim']
-        if dk_result:
-            rec_tags['dkim_domain'] = dk_result[0]['domain']
-            rec_tags['dkim_selector'] = dk_result[0]['selector']
-            rec_tags['dkim_raw_result'] = dk_result[0]['result']
-
-        spf_result = [x for x in rec['auth_results']['spf'] if x['result'] == 'pass'] or rec['auth_results']['spf']
-        if spf_result:
-            rec_tags['spf_domain'] = spf_result[0]['domain']
-            rec_tags['spf_raw_result'] = spf_result[0]['result']
-
-        rec_tags = ','.join([f'{k}={v.lower()}' for (k, v) in sorted(rec_tags.items())])
-
         data = {
             'count': rec['count'],
             'report_id': rep['report_metadata']['report_id'],
             'src_ip': rec['source']['ip_address'],
             'src': rec['source']['reverse_dns'],
+            'header_from': rec['identifiers']['header_from'],
+            'envelope_from': rec['identifiers']['envelope_from'],
         }
+
+        dk_result = [x for x in rec['auth_results']['dkim'] if x['result'] == 'pass'] or rec['auth_results']['dkim']
+        if dk_result:
+            data['dkim_domain'] = dk_result[0]['domain']
+            data['dkim_selector'] = dk_result[0]['selector']
+            rec_tags['dkim_raw_result'] = dk_result[0]['result']
+
+        spf_result = [x for x in rec['auth_results']['spf'] if x['result'] == 'pass'] or rec['auth_results']['spf']
+        if spf_result:
+            data['spf_domain'] = spf_result[0]['domain']
+            rec_tags['spf_raw_result'] = spf_result[0]['result']
+
+        rec_tags = ','.join([f'{k}={v.lower()}' for (k, v) in sorted(rec_tags.items())])
 
         data_cooked = []
         for (k, v) in data.items():
