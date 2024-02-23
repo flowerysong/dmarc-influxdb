@@ -50,7 +50,7 @@ for rep in parsed['aggregate_reports']:
             rec_tags['spf_domain'] = spf_result[0]['domain']
             rec_tags['spf_raw_result'] = spf_result[0]['result']
 
-        rec_tags = ','.join(['='.join(x) for x in sorted(rec_tags.items())])
+        rec_tags = ','.join([f'{k}={v}' for (k, v) in sorted(rec_tags.items())])
 
         data = {
             'count': rec['count'],
