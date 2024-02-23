@@ -50,7 +50,7 @@ for rep in parsed['aggregate_reports']:
             rec_tags['spf_domain'] = spf_result[0]['domain']
             rec_tags['spf_raw_result'] = spf_result[0]['result']
 
-        rec_tags = ','.join([f'{k}={v}' for (k, v) in sorted(rec_tags.items())])
+        rec_tags = ','.join([f'{k}={v.lower()}' for (k, v) in sorted(rec_tags.items())])
 
         data = {
             'count': rec['count'],
@@ -64,6 +64,6 @@ for rep in parsed['aggregate_reports']:
             if isinstance(v, int):
                 data_cooked.append(f'{k}={v}')
             else:
-                data_cooked.append(f'{k}="{v}"')
+                data_cooked.append(f'{k}="{v.lower()}"')
 
         print(f'dmarc_report,{rec_tags} {",".join(sorted(data_cooked))} {timestamp}')
