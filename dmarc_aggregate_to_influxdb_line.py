@@ -22,7 +22,7 @@ for rep in parsed['aggregate_reports']:
     }
 
     timestamp = datetime.fromisoformat(rep['report_metadata']['end_date'])
-    timestamp = int(timestamp.timestamp()) * 10^9
+    timestamp = int(timestamp.timestamp())
 
     for rec in rep['records']:
         rec_tags = tags.copy()
