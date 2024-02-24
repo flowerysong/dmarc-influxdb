@@ -25,6 +25,7 @@ for rep in parsed['aggregate_reports']:
     timestamp = int(timestamp.timestamp())
 
     for rec in rep['records']:
+        timestamp += 1
         rec_tags = tags.copy()
         rec_tags.update({
             'src_domain': rec['source']['base_domain'],
